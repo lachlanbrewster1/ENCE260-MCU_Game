@@ -1,8 +1,8 @@
 #include "system.h"
-//#include "pongBall.h"
+#include "pongBall.h"
 //#include "pongPaddle.h"
 //#include "led.h"
-//#include "pio.h"
+#include "pio.h"
 //#include "ledmat.h"
 //#include "navswitch.h"
 #include "tinygl.h"
@@ -20,17 +20,23 @@ void welcomeMsg (void)
     tinygl_text ("WELCOME TO PONG! ");
 }
 
+
 int main (void)
-{
+{       
     system_init ();
-    pacer_init (1000);
-    welcomeMsg();
+    ledmatBall_init ();
+    ball_struct_t ball = initBall();
+
+    pacer_init (10);
+    //welcomeMsg();
 
 
     while (1)
     {
         pacer_wait ();
-        tinygl_update ();
+        ball = move_ball(ball);
+        //tinygl_update ();
+           
 
     }
 }
