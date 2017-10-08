@@ -52,26 +52,6 @@ void ledmat_pixel_set (int col, int row, bool state)
 }
 
 
-/** Initialise LED matrix PIO pins.  */
-void ledmatPaddle_init (void)
-{
-    uint8_t row;
-    uint8_t col;
-
-    for (row = 0; row < 7; row++)
-    {
-        pio_config_set (ledmat_rows[row], PIO_OUTPUT_HIGH);
-        pio_output_high (ledmat_rows[row]);
-    }
-
-    for (col = 0; col < 5; col++)
-    {
-        pio_config_set (ledmat_cols[col], PIO_OUTPUT_HIGH);
-        pio_output_high (ledmat_cols[col]);
-    }
-}
-
-
 /** Initializes the paddle
  * places the paddle */
 paddle_struct_t initPaddle(int8_t playerNum)
@@ -89,12 +69,9 @@ paddle_struct_t initPaddle(int8_t playerNum)
 }
 
 /** Moves the given paddle up or down given button press
- * @param paddle given paddle to move */
+ * @param paddle: given paddles new position */
 paddle_struct_t movePaddle (paddle_struct_t paddle, bool up)
 {
-    
-    ledmat_pixel_set (paddle.currCol1, paddle.currRow1, 0);
-    ledmat_pixel_set (paddle.currCol2, paddle.currRow2, 0);
     
     if (up && paddle.currCol1 != 0) {
             paddle.currCol1--;
@@ -105,8 +82,5 @@ paddle_struct_t movePaddle (paddle_struct_t paddle, bool up)
         paddle.currCol1++;
         paddle.currCol2++;
     }
-    
-    ledmat_pixel_set (paddle.currCol1, paddle.currRow1, 1);
-    ledmat_pixel_set (paddle.currCol2, paddle.currRow2, 1);
     return paddle;
 }
