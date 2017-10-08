@@ -15,9 +15,6 @@
 void ledmat_pixel_set (int col, int row, bool state);
 
 
-/** Initialise LED matrix PIO pins.  */
-void ledmatPaddle_init (void);
-
 /** Structure to define a pong paddle
  * contains paddels current position
  * and current player (1 or 2) */
@@ -35,5 +32,5 @@ typedef struct paddle_struct
 paddle_struct_t initPaddle(int8_t playerNum);
 
 /** Moves the given paddle up or down given button press
- * @param paddle given paddle to move */
+ * @param paddle: given paddles new position */
 paddle_struct_t movePaddle (paddle_struct_t paddle, bool up);
