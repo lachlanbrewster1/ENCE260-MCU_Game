@@ -37,7 +37,7 @@ static pio_t ledmat_cols[] =
     @param col LED column number
     @param row LED row number
     @param state LED state  */
-void ledmat_pixel_set (int col, int row, bool state)
+void ledmat_pixel_set1 (int col, int row, bool state)
 {
     if (state)
     {
@@ -51,43 +51,19 @@ void ledmat_pixel_set (int col, int row, bool state)
     }
 }
 
-
-/** Initialise LED matrix PIO pins.  */
-void ledmatBall_init (void)
-{
-    uint8_t row;
-    uint8_t col;
-
-    for (row = 0; row < 7; row++)
-    {
-        pio_config_set (ledmat_rows[row], PIO_OUTPUT_HIGH);
-        pio_output_high (ledmat_rows[row]);
-    }
-
-    for (col = 0; col < 5; col++)
-    {
-        pio_config_set (ledmat_cols[col], PIO_OUTPUT_HIGH);
-        pio_output_high (ledmat_cols[col]);
-    }
-}
-
-
 /** Initializes the ball
  * places the ball at pos (1,1) */
 ball_struct_t initBall(void)
 {
     ball_struct_t ball = {0,0,1,1};
-    ledmat_pixel_set (ball.currCol, ball.currRow, 1);
+    ledmat_pixel_set1 (ball.currCol, ball.currRow, 1);
     return ball;
 }
 
 /** Moves the given ball diagonally across the board
- * @param ball given ball to move */
-ball_struct_t move_ball (ball_struct_t ball)
+ * @param ball: given balls new position */
+ball_struct_t moveBall (ball_struct_t ball)
 {
-
-    ledmat_pixel_set (ball.currCol, ball.currRow, 0);
-    
     if (ball.left) {
         ball.currRow++;
     } else {
@@ -118,7 +94,6 @@ ball_struct_t move_ball (ball_struct_t ball)
         }
         ball.down = !(ball.down);
     }
-    
-    ledmat_pixel_set (ball.currCol, ball.currRow, 1); 
+
     return ball;
 }
