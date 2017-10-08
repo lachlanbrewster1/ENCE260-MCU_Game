@@ -13,11 +13,7 @@
     @param col LED column number
     @param row LED row number
     @param state LED state  */
-void ledmat_pixel_set (int col, int row, bool state);
-
-
-/** Initialise LED matrix PIO pins.  */
-void ledmatBall_init (void);
+void ledmat_pixel_set1 (int col, int row, bool state);
 
 /** Structure to define a pong ball
  * contains balls current position
@@ -35,5 +31,5 @@ typedef struct ball_struct
 ball_struct_t initBall(void);
 
 /** Moves the given ball diagonally across the board
- * @param ball given ball to move */
-ball_struct_t move_ball (ball_struct_t ball);
+ * @param ball: given balls new position */
+ball_struct_t moveBall (ball_struct_t ball);
