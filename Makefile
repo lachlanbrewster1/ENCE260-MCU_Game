@@ -5,7 +5,7 @@
 
 # Definitions.
 CC = avr-gcc
-CFLAGS = -mmcu=atmega32u2 -Os -Wall -Wstrict-prototypes -Wextra -g -I. -I../../utils -I../../fonts -I../../drivers -I../../drivers/avr
+CFLAGS = -mmcu=atmega32u2 -Os -Wall -std=c99 -Wstrict-prototypes -Wextra -g -I. -I../../utils -I../../fonts -I../../drivers -I../../drivers/avr
 OBJCOPY = avr-objcopy
 SIZE = avr-size
 DEL = rm
@@ -16,10 +16,16 @@ all: game.out
 
 
 # Compile: create object files from C source files.
-game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
+game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
 	$(CC) -c $(CFLAGS) $< -o $@
 		
 pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+ledController.o: ledController.c ../../drivers/avr/system.h ../../drivers/avr/pio.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 pio.o: ../../drivers/avr/pio.c ../../drivers/avr/pio.h ../../drivers/avr/system.h
@@ -52,7 +58,7 @@ tinygl.o: ../../utils/tinygl.c ../../drivers/avr/system.h ../../drivers/display.
 
 
 # Link: create ELF output file from object files.
-game.out: game.o pongBall.o pio.o system.o timer.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o
+game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o timer.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
