@@ -9,6 +9,7 @@
 #include "pacer.h"
 #include "../fonts/font3x5_1.h"
 #include "pongGameStatus.h"
+#include "ir_uart.h"
 
 /** Welcome message to start game */
 void welcomeMsg (void)
@@ -24,6 +25,7 @@ void welcomeMsg (void)
 
 int main (void)
 {
+    ir_uart_init ();
     pacer_init (500);
     navswitch_init ();
     system_init ();
