@@ -16,15 +16,18 @@ all: game.out
 
 
 # Compile: create object files from C source files.
-game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
+game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h ../../drivers/navswitch.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
 	$(CC) -c $(CFLAGS) $< -o $@
-		
+
 pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
 	$(CC) -c $(CFLAGS) $< -o $@
-	
+
 pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
 	$(CC) -c $(CFLAGS) $< -o $@
-	
+
+pongGameStatus.o: pongGameStatus.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h
+	$(CC) -c $(CFLAGS) $< -o $@
+
 ledController.o: ledController.c ../../drivers/avr/system.h ../../drivers/avr/pio.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -58,14 +61,14 @@ tinygl.o: ../../utils/tinygl.c ../../drivers/avr/system.h ../../drivers/display.
 
 
 # Link: create ELF output file from object files.
-game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o timer.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o
+game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o timer.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o pongGameStatus.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 
 
 # Target: clean project.
 .PHONY: clean
-clean: 
+clean:
 	-$(DEL) *.o *.out *.hex
 
 
