@@ -108,6 +108,9 @@ int main (void)
     uint8_t locationPaddle1;
     uint8_t locationPaddle2;
     uint8_t locationBall;
+    
+    char received;
+    char send;
 
 
     int16_t counter = 0;
@@ -131,38 +134,67 @@ int main (void)
             paddle1 = pollPaddleButton(paddle1);
 
             //poll uart for new data
-            /*if (ir_uart_read_ready_p()) {
-                locationPaddle2 = ir_uart_getc();
-                locationBall = ir_uart_getc();
-                //need to parse paddle 2 out somehow
-            }*/
-            //updating, i think?
-            //ball = moveBall(locationBall);
-            //paddle2 = locationPaddle2;
+            if (ir_uart_read_ready_p()) {
+                received = ir_uart_getc();
+                if (received >= 120 && received <= 123) {
+                    paddle2.col1 = received - 120;
+                    paddle2.col2 = received - 119;
+
+            }
+            
         
             /**Collisions*/
             if (!collision(paddle1, ball) && ball.currRow == 0) {
                 /**Player 1 has lost*/
+                send = 'w';
                 break;
             } else if (!collision(paddle2, ball) && ball.currRow == 6) {
-                /**Player 1 has lost*/
+                /**Player 2 has lost*/
+                send = 'l';
+                ir_uart_putc(send);
                 break;
             }
             
             //send new location data
+            send = ball.row * 10 + ball.col + 32;   
+            ir_uart_putc(send);
+            
+            send = 100 + paddle1.col1;
+            ir_uart_putc(send);
+            
+            send = 110 + paddle2.col1;
+            ir_uart_putc(send);
+            
+            
+            
+            
         } else {
             //poll new data
             if (ir_uart_read_ready_p()) {
-                locationPaddle1 = ir_uart_getc();
-                locationBall = ir_uart_getc();
-                //need to parse paddle 1 and out somehow
+                received = ir_uart_getc();
+                
+                if (received <= 96 && received >= 32) {
+                    received -= 32;
+                    ball.col = receieved mod 10;
+                    ball.row = (received - ball.col ) / 10
+                    
+                } else if (received >= 100 && received <= 103) {
+                    paddle1.col1 = received - 100;
+                    paddle1.col2 = received - 99;
+                } else if (received >= 110 && received <= 113) {
+                    paddle2.col1 = received - 110;
+                    paddle2.col2 = received - 109;
+                } else {
+                    break;
+                }
             }
-            //updating, i think?
-            //ball = moveBall(locationBall);
-            //paddle1 = locationPaddle1;
-
-            paddle2 = pollPaddleButton(paddle2);
+            
             //send new location data
+            paddle2 = pollPaddleButton(paddle2);
+            send = 110 + paddle2.col1;
+            ir_uart_putc(send);
+            
+            
         }
         
         bitMaker(newBitmap, ball.currCol,ball.currRow, 1);
@@ -171,3 +203,4 @@ int main (void)
         current_column = updateDisplay(current_column, newBitmap);
     }
 }
+
