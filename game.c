@@ -20,7 +20,7 @@ void welcomeMsg (void)
     tinygl_text_speed_set (5);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
-    tinygl_text ("WELCOME TO PONG! ");ls
+    tinygl_text ("WELCOME TO PONG! ");
 }
 
 
@@ -52,21 +52,17 @@ int main (void)
         tinygl_update ();
     }
 
-    while (gameStart) {
-        if (player1) {
-            tinygl_text ("YOU ARE PLAYER 1");
-        } else {
-            tinygl_text ("YOU ARE PLAYER 2");
-        }
-        tinygl_update ();
-    }
-
 
 
 
     paddle_struct_t paddle1 = initPaddle(1);
     paddle_struct_t paddle2 = initPaddle(2);
     ball_struct_t ball = initBall();
+    
+    uint8_t locationPaddle1;
+    uint8_t locationPaddle2;
+    uint8_t locationBall;
+
 
 
     int16_t counter = 0;
@@ -81,6 +77,8 @@ int main (void)
     {
         /**I know this is all a bit messy, will clean up!*/
         pacer_wait ();
+        //navswitch_update ();
+
 
         if (counter == 1000) {
             up = 1 - up;
@@ -92,13 +90,70 @@ int main (void)
         bitMaker(newBitmap, paddle2.currCol1,paddle2.currRow1, 0);
         bitMaker(newBitmap, paddle2.currCol2,paddle2.currRow2, 0);
 
-        if (counter % 50 == 0) {
+        if (counter % 200 == 0) {
             bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
             ball = moveBall(ball);
         }
 
-        paddle1 = movePaddle(paddle1, up);
-        paddle2 = movePaddle(paddle2, !up);
+
+        if (player1) {
+        //calc ball
+            
+            //poll button
+            navswitch_update ();
+            if (navswitch_push_event_p (NAVSWITCH_EAST)) {
+                paddle1 = movePaddle(paddle1, up);
+            }
+            else if (navswitch_push_event_p (NAVSWITCH_WEST)) {
+                paddle1 = movePaddle(paddle1, !up);
+            }
+            
+            //poll uart for new data
+            /*if (ir_uart_read_ready_p()) {
+                locationPaddle2 = ir_uart_getc();
+                locationBall = ir_uart_getc();
+                //need to parse paddle 2 out somehow
+            }*/
+            //updating, i think?
+            //ball = moveBall(locationBall);
+            //paddle2 = locationPaddle2;
+        
+            //check collisons with current location data
+            if (!collision(paddle1, ball) && ball.currRow == 0) {
+                //player 1 lost
+                break;
+            } else if (!collision(paddle2, ball) && ball.currRow == 6) {
+                //player 2 lost
+                break;
+            }
+            
+            //send new location data
+            
+        } else {
+            //poll new data
+            if (ir_uart_read_ready_p()) {
+                locationPaddle1 = ir_uart_getc();
+                locationBall = ir_uart_getc();
+                //need to parse paddle 1 and out somehow
+            }
+            //updating, i think?
+            //ball = moveBall(locationBall);
+            //paddle1 = locationPaddle1;
+            
+            
+            //poll button
+            navswitch_update ();
+            if (navswitch_push_event_p (NAVSWITCH_EAST)) {
+                paddle2 = movePaddle(paddle1, up);
+            }
+            else if (navswitch_push_event_p (NAVSWITCH_WEST)) {
+                paddle2 = movePaddle(paddle1, !up);
+            }
+            
+            //send new location data
+        }
+        
+        
         bitMaker(newBitmap, ball.currCol,ball.currRow, 1);
         bitMaker(newBitmap, paddle1.currCol1,paddle1.currRow1, 1);
         bitMaker(newBitmap, paddle1.currCol2,paddle1.currRow2, 1);
@@ -115,6 +170,7 @@ int main (void)
         {
             current_column = 0;
         }
+          
 
     }
 }
