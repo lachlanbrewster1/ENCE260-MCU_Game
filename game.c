@@ -101,8 +101,6 @@ int main (void)
 
     gameStart();
 
-    //ir_uart_init ();
-
     paddle_struct_t paddle1 = initPaddle(1);
     paddle_struct_t paddle2 = initPaddle(2);
     ball_struct_t ball = initBall();
@@ -110,14 +108,10 @@ int main (void)
     char received;
     char send;
 
-
     int16_t counter = 0;
 
     uint8_t newBitmap[5] = {0};
     uint8_t current_column = 0;
-
-
-
 
     while (1)
     {
@@ -133,14 +127,11 @@ int main (void)
                 ir_uart_putc(send);
                 send = 100 + paddle1.currCol1;
                 ir_uart_putc(send);
-                //send = 110 + paddle2.currCol1;
-                //ir_uart_putc(send);
                 counter = 0;
             }
 
             paddle1 = pollPaddleButton(paddle1);
 
-            //poll uart for new data
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
                 if (received >= 120 && received <= 123) {
@@ -149,7 +140,6 @@ int main (void)
 
                 }
             }
-
 
             /*Collisions
             if (!collision(paddle1, ball) && ball.currRow == 0) {
@@ -164,19 +154,10 @@ int main (void)
                 break;
             }*/
 
-            //send new location data
-
         } else {
-            //poll new data
-
-            if (counter == 200) {
-                bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
-                counter = 0;
-
-            }
             paddle2 = pollPaddleButton(paddle2);
             if (counter % 100 == 0) {
-                send = 110 + paddle2.currCol1;
+                send = 120 + paddle2.currCol1;
                 ir_uart_putc(send);
             }
 
@@ -186,6 +167,7 @@ int main (void)
 
                 if (received <= 96 && received >= 32) {
                     received -= 32;
+                    bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
                     ball.currCol = received % 10;
                     ball.currRow = (received - ball.currCol ) / 10;
 
