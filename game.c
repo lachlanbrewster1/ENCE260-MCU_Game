@@ -30,7 +30,7 @@ void welcomeMsg (void)
  *  @param current_column: The current column to display
  *  @param bitmap: the mapping of bits to display*/
 uint8_t updateDisplay(uint8_t current_column, uint8_t *bitMap)
-{        
+{
     display_column (bitMap[current_column], current_column);
 
     current_column++;
@@ -41,13 +41,13 @@ uint8_t updateDisplay(uint8_t current_column, uint8_t *bitMap)
     }
     return current_column;
 }
-    
+
 /** Updates the bitmap, turns bits on or on within each row
  *  @param bitmap: The bitmap to update
  *  @param paddle1: the first paddle
  *  @param paddle2: the second paddle
  *  @param on: turns bit on if true, else off*/
-void updateBitMap(uint8_t *bitMap, paddle_struct_t paddle1, paddle_struct_t paddle2, bool on) 
+void updateBitMap(uint8_t *bitMap, paddle_struct_t paddle1, paddle_struct_t paddle2, bool on)
 {
     bitMaker(bitMap, paddle1.currCol1,paddle1.currRow1, on);
     bitMaker(bitMap, paddle1.currCol2,paddle1.currRow2, on);
@@ -57,7 +57,7 @@ void updateBitMap(uint8_t *bitMap, paddle_struct_t paddle1, paddle_struct_t padd
 
 /** The game starting message, will display a nice message
  *  and also based on button press, decides who player 1 is */
-void gameStart(void) 
+void gameStart(void)
 {
     welcomeMsg();
     bool gameStart = 0;
@@ -65,13 +65,13 @@ void gameStart(void)
     while (!gameStart) {
         navswitch_update();
         if (ir_uart_read_ready_p ()) {
-            if (ir_uart_getc () == 'P') {
+            if (ir_uart_getc () == 'p') {
                 isPlayer1 = 0;
                 gameStart = 1;
             }
         }
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            ir_uart_putc('P');
+            ir_uart_putc('p');
             gameStart = 1;
         }
         tinygl_update ();
@@ -79,8 +79,8 @@ void gameStart(void)
 }
 
 /** Polls button and moves the paddle accordingly*/
-paddle_struct_t pollPaddleButton(paddle_struct_t paddle) 
-{            
+paddle_struct_t pollPaddleButton(paddle_struct_t paddle)
+{
     navswitch_update ();
     if (navswitch_push_event_p (NAVSWITCH_EAST)) {
         paddle = movePaddle(paddle, DOWN);
@@ -93,22 +93,20 @@ paddle_struct_t pollPaddleButton(paddle_struct_t paddle)
 
 int main (void)
 {
-    ir_uart_init ();
     pacer_init (500);
     navswitch_init ();
     system_init ();
     ledMatInit();
-    
+    ir_uart_init ();
+
     gameStart();
-    
+
+    //ir_uart_init ();
+
     paddle_struct_t paddle1 = initPaddle(1);
     paddle_struct_t paddle2 = initPaddle(2);
     ball_struct_t ball = initBall();
-    
-    uint8_t locationPaddle1;
-    uint8_t locationPaddle2;
-    uint8_t locationBall;
-    
+
     char received;
     char send;
 
@@ -119,84 +117,87 @@ int main (void)
     uint8_t current_column = 0;
 
 
+
+
     while (1)
     {
         pacer_wait ();
         updateBitMap(newBitmap, paddle1, paddle2, 0) ;
 
-        if (counter == 200) {
-            bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
-            ball = moveBall(ball);
-            counter = 0;
-        }
-        
         if (isPlayer1) {
+
+            if (counter == 200) {
+                bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
+                ball = moveBall(ball);
+                send = (char) (ball.currRow * 10 + ball.currCol + 32);
+                ir_uart_putc(send);
+                send = 100 + paddle1.currCol1;
+                ir_uart_putc(send);
+                //send = 110 + paddle2.currCol1;
+                //ir_uart_putc(send);
+                counter = 0;
+            }
+
             paddle1 = pollPaddleButton(paddle1);
 
             //poll uart for new data
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
                 if (received >= 120 && received <= 123) {
-                    paddle2.col1 = received - 120;
-                    paddle2.col2 = received - 119;
+                    paddle2.currCol1 = received - 120;
+                    paddle2.currCol2 = received - 119;
 
+                }
             }
-            
-        
-            /**Collisions*/
+
+
+            /*Collisions
             if (!collision(paddle1, ball) && ball.currRow == 0) {
-                /**Player 1 has lost*/
+                Player 1 has lost
                 send = 'w';
+                ir_uart_putc(send);
                 break;
             } else if (!collision(paddle2, ball) && ball.currRow == 6) {
-                /**Player 2 has lost*/
+                /Player 2 has lost
                 send = 'l';
                 ir_uart_putc(send);
                 break;
-            }
-            
+            }*/
+
             //send new location data
-            send = ball.row * 10 + ball.col + 32;   
-            ir_uart_putc(send);
-            
-            send = 100 + paddle1.col1;
-            ir_uart_putc(send);
-            
-            send = 110 + paddle2.col1;
-            ir_uart_putc(send);
-            
-            
-            
-            
+
         } else {
             //poll new data
+
+            if (counter == 200) {
+                bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
+                counter = 0;
+
+            }
+            paddle2 = pollPaddleButton(paddle2);
+            if (counter % 100 == 0) {
+                send = 110 + paddle2.currCol1;
+                ir_uart_putc(send);
+            }
+
+
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
-                
+
                 if (received <= 96 && received >= 32) {
                     received -= 32;
-                    ball.col = receieved mod 10;
-                    ball.row = (received - ball.col ) / 10
-                    
+                    ball.currCol = received % 10;
+                    ball.currRow = (received - ball.currCol ) / 10;
+
                 } else if (received >= 100 && received <= 103) {
-                    paddle1.col1 = received - 100;
-                    paddle1.col2 = received - 99;
-                } else if (received >= 110 && received <= 113) {
-                    paddle2.col1 = received - 110;
-                    paddle2.col2 = received - 109;
+                    paddle1.currCol1 = received - 100;
+                    paddle1.currCol2 = received - 99;
                 } else {
-                    break;
+                    //break;
                 }
             }
-            
-            //send new location data
-            paddle2 = pollPaddleButton(paddle2);
-            send = 110 + paddle2.col1;
-            ir_uart_putc(send);
-            
-            
         }
-        
+
         bitMaker(newBitmap, ball.currCol,ball.currRow, 1);
         updateBitMap(newBitmap, paddle1, paddle2, 1);
         counter++;
