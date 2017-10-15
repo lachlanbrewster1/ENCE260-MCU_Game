@@ -9,6 +9,10 @@
 #include "pongPaddle.h"
 #include "ledMat.h"
 
+#ifndef LED_CONTROLLER_H
+#define LED_CONTROLLER_H
+
+
 /** Turns on the correct LEDs at the given row and column
  * @param row_pattern: pattern to switch on
  * @param current_column: the current column to turn on */
@@ -35,3 +39,5 @@ void update_bit_map(uint8_t *bit_map, paddle_struct_t paddle_1, paddle_struct_t 
  *  @param current_column: The current column to display
  *  @param bitmap: the mapping of bits to display*/
 uint8_t update_display(uint8_t current_column, uint8_t *bit_map);
+
+#endif

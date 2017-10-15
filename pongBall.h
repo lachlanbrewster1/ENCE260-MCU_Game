@@ -9,6 +9,9 @@
 #include "pio.h"
 #include "ledMat.h"
 
+#ifndef PONG_BALL_H
+#define PONG_BALL_H
+
 /** Structure to define a pong ball
  * contains balls current position
  * and current direction */
@@ -27,3 +30,5 @@ ball_struct_t init_ball(void);
 /** Moves the given ball diagonally across the board
  * @param ball: given balls new position */
 ball_struct_t move_ball (ball_struct_t ball);
+
+#endif

@@ -13,8 +13,8 @@
 #include "tinygl.h"
 #include "pacer.h"
 #include "../fonts/font3x5_1.h"
-//#include "pongGameStatus.h"
 #include "ir_uart.h"
+#include "pongDataSharing.h"
 
 #define UP 1
 #define DOWN 0
@@ -31,7 +31,7 @@
 
 bool is_player1 = TRUE;
 
-/** Welcome message to start game 
+/** Welcome message to start game
  *  prints until one player presses the button*/
 void scrolling_msg (const char* message)
 {
@@ -87,12 +87,12 @@ bool wall_collision(paddle_struct_t paddle, ball_struct_t ball)
     if(paddle.curr_row_1 == ball.curr_row) {
         if(ball.curr_col != paddle.curr_col_1 && ball.curr_col != paddle.curr_col_2) {
             return TRUE;
-        } 
+        }
         else {
             return FALSE;
         }
     }
-        
+
     return FALSE;
 }
 
@@ -117,10 +117,10 @@ int main (void)
 
     uint8_t bit_map[5] = {0};
     uint8_t current_column = 0;
-    
+
     int8_t player_1_lives = NUM_OF_LIVES;
     int8_t player_2_lives = NUM_OF_LIVES;
-    
+
     bool won = FALSE;
 
 
@@ -130,28 +130,20 @@ int main (void)
         update_bit_map(bit_map, paddle_1, paddle_2, OFF) ;
 
         if (is_player1) {
-            
+
             paddle_1 = poll_paddle_button(paddle_1);
 
             if (ir_uart_read_ready_p()) {
-                received = ir_uart_getc();
-                if (received >= 120 && received <= 123) {
-                    paddle_2.curr_col_1 = received - 120;
-                    paddle_2.curr_col_2 = received - 119;
-
-                }
+                paddle_2 = check_player_2(paddle_2);
             }
 
             if (counter == BALL_SPEED) {
                 bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
                 ball = move_ball(ball);
-                
-                send = (char) (ball.curr_row * 10 + ball.curr_col + 32);
-                ir_uart_putc(send);
-                send = 100 + paddle_1.curr_col_1;
-                ir_uart_putc(send);
+
+                send_data_to_p2(ball, paddle_1);
                 counter = 0;
-                
+
                 if(ball.curr_row == 0 && wall_collision(paddle_1, ball)) {
                     player_1_lives--;
                     if(player_1_lives == 0) {
@@ -174,22 +166,13 @@ int main (void)
         } else {
             paddle_2 = poll_paddle_button(paddle_2);
             if (counter % BALL_SPEED / 2 == 0) {
-                send = 120 + paddle_2.curr_col_1;
-                ir_uart_putc(send);
+                send_data_to_p1(paddle_2);
             }
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
-
-                if (received <= 96 && received >= 32) {
-                    received -= 32;
-                    bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
-                    ball.curr_col = received % 10;
-                    ball.curr_row = (received - ball.curr_col ) / 10;
-
-                } else if (received >= 100 && received <= 103) {
-                    paddle_1.curr_col_1 = received - 100;
-                    paddle_1.curr_col_2 = received - 99;
-                } else if (received == 'w' || received == 'l'){
+                ball = check_ball(ball, received, bit_map);
+                paddle_1 = check_player_1(paddle_1, received);
+                if (received == 'w' || received == 'l'){
                     if(received == 'w') {
                         won = TRUE;
                     } else {
@@ -211,11 +194,11 @@ int main (void)
     } else {
         scrolling_msg("YOU LOST!");
     }
-    
+
     pacer_init (LOOP_RATE * 10);
-    
+
     bool restart = FALSE;
-    
+
     while(!restart) {
         pacer_wait();
         navswitch_update();
@@ -223,7 +206,7 @@ int main (void)
             restart = TRUE;
         }
         tinygl_update();
-        
+
     }
     main();
 }
