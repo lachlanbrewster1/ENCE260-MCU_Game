@@ -27,26 +27,28 @@
 #define LOOP_RATE 500
 #define TEXT_SPEED 5
 #define BALL_SPEED 200
+#define NUM_OF_LIVES 3
 
 bool is_player1 = TRUE;
 
 /** Welcome message to start game 
  *  prints until one player presses the button*/
-void welcome_msg (void)
+void scrolling_msg (const char* message)
 {
     tinygl_init (LOOP_RATE * 2);
     tinygl_font_set (&font3x5_1);
     tinygl_text_speed_set (TEXT_SPEED);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
-    tinygl_text ("WELCOME TO PONG! ");
+    tinygl_text (message);
 }
 
 /** The game starting message, will display a nice message
  *  and also based on button press, decides who player 1 is */
 void game_start(void)
 {
-    welcome_msg();
+    const char* welcome = "WELCOME TO PONG! ";
+    scrolling_msg(welcome);
     bool game_start = FALSE;
 
     while (!game_start) {
@@ -78,6 +80,22 @@ paddle_struct_t poll_paddle_button(paddle_struct_t paddle)
     return paddle;
 }
 
+
+/** Checks if the ball has collided with the wall */
+bool wall_collision(paddle_struct_t paddle, ball_struct_t ball)
+{
+    if(paddle.curr_row_1 == ball.curr_row) {
+        if(ball.curr_col != paddle.curr_col_1 && ball.curr_col != paddle.curr_col_2) {
+            return TRUE;
+        } 
+        else {
+            return FALSE;
+        }
+    }
+        
+    return FALSE;
+}
+
 int main (void)
 {
     pacer_init (LOOP_RATE);
@@ -99,25 +117,20 @@ int main (void)
 
     uint8_t bit_map[5] = {0};
     uint8_t current_column = 0;
+    
+    int8_t player_1_lives = NUM_OF_LIVES;
+    int8_t player_2_lives = NUM_OF_LIVES;
+    
+    bool won = FALSE;
+
 
     while (TRUE)
     {
-        pacer_wait ();
+        pacer_wait();
         update_bit_map(bit_map, paddle_1, paddle_2, OFF) ;
 
         if (is_player1) {
-
-            if (counter == BALL_SPEED) {
-                bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
-                ball = move_ball(ball);
-                
-                send = (char) (ball.curr_row * 10 + ball.curr_col + 32);
-                ir_uart_putc(send);
-                send = 100 + paddle_1.curr_col_1;
-                ir_uart_putc(send);
-                counter = 0;
-            }
-
+            
             paddle_1 = poll_paddle_button(paddle_1);
 
             if (ir_uart_read_ready_p()) {
@@ -129,22 +142,38 @@ int main (void)
                 }
             }
 
-            /*Collisions
-            if (!collision(paddle_1, ball) && ball.currRow == 0) {
-                Player 1 has lost
-                send = 'w';
+            if (counter == BALL_SPEED) {
+                bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
+                ball = move_ball(ball);
+                
+                send = (char) (ball.curr_row * 10 + ball.curr_col + 32);
                 ir_uart_putc(send);
-                break;
-            } else if (!collision(paddle_2, ball) && ball.currRow == 6) {
-                /Player 2 has lost
-                send = 'l';
+                send = 100 + paddle_1.curr_col_1;
                 ir_uart_putc(send);
-                break;
-            }*/
+                counter = 0;
+                
+                if(ball.curr_row == 0 && wall_collision(paddle_1, ball)) {
+                    player_1_lives--;
+                    if(player_1_lives == 0) {
+                        won = FALSE;
+                        send = 'w';
+                        ir_uart_putc(send);
+                        break;
+                    }
+                } else if (ball.curr_row == 6 && wall_collision(paddle_2, ball)) {
+                    player_2_lives--;
+                    if(player_2_lives == 0) {
+                        send = 'l';
+                        ir_uart_putc(send);
+                        won = TRUE;
+                        break;
+                    }
+                }
+            }
 
         } else {
             paddle_2 = poll_paddle_button(paddle_2);
-            if (counter % 100 == 0) {
+            if (counter % BALL_SPEED / 2 == 0) {
                 send = 120 + paddle_2.curr_col_1;
                 ir_uart_putc(send);
             }
@@ -160,8 +189,13 @@ int main (void)
                 } else if (received >= 100 && received <= 103) {
                     paddle_1.curr_col_1 = received - 100;
                     paddle_1.curr_col_2 = received - 99;
-                } else {
-                    //break;
+                } else if (received == 'w' || received == 'l'){
+                    if(received == 'w') {
+                        won = TRUE;
+                    } else {
+                        won = FALSE;
+                    }
+                    break;
                 }
             }
         }
@@ -171,5 +205,26 @@ int main (void)
         counter++;
         current_column = update_display(current_column, bit_map);
     }
+
+    if(won) {
+        scrolling_msg("YOU WON!");
+    } else {
+        scrolling_msg("YOU LOST!");
+    }
+    
+    pacer_init (LOOP_RATE * 10);
+    
+    bool restart = FALSE;
+    
+    while(!restart) {
+        pacer_wait();
+        navswitch_update();
+        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
+            restart = TRUE;
+        }
+        tinygl_update();
+        
+    }
+    main();
 }
 
