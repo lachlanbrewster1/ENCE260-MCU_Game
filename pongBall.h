@@ -21,6 +21,8 @@ typedef struct ball_struct
     int8_t curr_col;
     bool left;
     bool down;
+    int8_t player_1_lives;
+    int8_t player_2_lives;
 } ball_struct_t;
 
 /** Initializes the ball

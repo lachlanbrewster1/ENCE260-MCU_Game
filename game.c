@@ -27,7 +27,6 @@
 #define LOOP_RATE 500
 #define TEXT_SPEED 5
 #define BALL_SPEED 200
-#define NUM_OF_LIVES 3
 
 bool is_player1 = TRUE;
 
@@ -118,9 +117,6 @@ int main (void)
     uint8_t bit_map[5] = {0};
     uint8_t current_column = 0;
 
-    int8_t player_1_lives = NUM_OF_LIVES;
-    int8_t player_2_lives = NUM_OF_LIVES;
-
     bool won = FALSE;
 
 
@@ -145,16 +141,16 @@ int main (void)
                 counter = 0;
 
                 if(ball.curr_row == 0 && wall_collision(paddle_1, ball)) {
-                    player_1_lives--;
-                    if(player_1_lives == 0) {
+                    ball.player_1_lives --;
+                    if(ball.player_1_lives == 0) {
                         won = FALSE;
                         send = 'w';
                         ir_uart_putc(send);
                         break;
                     }
                 } else if (ball.curr_row == 6 && wall_collision(paddle_2, ball)) {
-                    player_2_lives--;
-                    if(player_2_lives == 0) {
+                    ball.player_2_lives--;
+                    if(ball.player_2_lives == 0) {
                         send = 'l';
                         ir_uart_putc(send);
                         won = TRUE;

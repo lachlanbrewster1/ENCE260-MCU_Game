@@ -16,6 +16,7 @@
 #define BALL_SHIFT 2
 #define ON 1
 #define TRUE 1
+#define NUM_OF_LIVES 3
 
 /** Structure to define a pong ball
  * contains balls current position
@@ -26,13 +27,15 @@ typedef struct ball_struct
     int8_t curr_col;
     bool left;
     bool down;
+    int8_t player_1_lives;
+    int8_t player_2_lives;
 } ball_struct_t;
 
 /** Initializes the ball
  * places the ball at pos (1,1) */
 ball_struct_t init_ball(void)
 {
-    ball_struct_t ball = {MIN_ROW,MIN_COL,TRUE,TRUE};
+    ball_struct_t ball = {MIN_ROW,MIN_COL,TRUE,TRUE, NUM_OF_LIVES, NUM_OF_LIVES};
     ledmat_pixel_set (ball.curr_col, ball.curr_row, ON);
     return ball;
 }
@@ -46,14 +49,14 @@ ball_struct_t move_ball (ball_struct_t ball)
     } else {
         ball.curr_row--;
     }
-    
+
     if (ball.down) {
         ball.curr_col++;
     } else {
         ball.curr_col--;
     }
-    
-        
+
+
     if (ball.curr_row > MAX_ROW || ball.curr_row < MIN_ROW) {
         if (ball.left) {
             ball.curr_row -= BALL_SHIFT;
@@ -62,7 +65,7 @@ ball_struct_t move_ball (ball_struct_t ball)
         }
         ball.left = !(ball.left);
     }
-    
+
     if (ball.curr_col > MAX_COL || ball.curr_col < MIN_COL) {
         if (ball.down) {
             ball.curr_col -= BALL_SHIFT;
