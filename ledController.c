@@ -1,5 +1,20 @@
+/** @file   ledController.c
+    @author G Lamont and L Brewster
+    @date   12 October 2017
+    @brief  Led controller module, initiates and sets LED lights on UCFK
+*/
+
 #include "system.h"
 #include "pio.h"
+#include "pongPaddle.h"
+#include "ledMat.h"
+
+#define MAX_COL 4
+#define MIN_COL 0
+#define MAX_ROW 6
+#define MIN_ROW 0
+
+static uint8_t previous_column = MIN_COL;
 
 /** Define PIO pins driving LED matrix rows.  */
 static const pio_t rows[] =
@@ -17,8 +32,6 @@ static const pio_t cols[] =
     LEDMAT_COL4_PIO, LEDMAT_COL5_PIO
 };
 
-static uint8_t previous_column = 0;
-
 /** Turns on the correct LEDs at the given row and column
  * @param row_pattern: pattern to switch on
  * @param current_column: the current column to turn on */
@@ -28,7 +41,7 @@ void display_column (uint8_t row_pattern, uint8_t current_column)
     pio_output_high (cols[previous_column]);
 
     
-    for(uint8_t current_row = 0; current_row < 7; current_row++) {
+    for(uint8_t current_row = MIN_ROW; current_row <= MAX_ROW; current_row++) {
         if ((row_pattern >> current_row & 1)) {
             pio_output_low (rows[current_row]);
         } else {
@@ -46,30 +59,47 @@ void display_column (uint8_t row_pattern, uint8_t current_column)
  * @param col: the column the pattern is to be added to
  * @param row: the row to toggle
  * @param on: if on the row/col is set to 1, else 0 */
-void bitMaker(uint8_t *currBit, uint8_t col, uint8_t row, bool on) {
+void bit_maker(uint8_t *curr_bit, uint8_t col, uint8_t row, bool on) {
     if(on) {
-        currBit[col] = currBit[col] | (1 << row);
+        curr_bit[col] = curr_bit[col] | (1 << row);
     } else {
-        currBit[col] = currBit[col] & !(1 << row);
+        curr_bit[col] = curr_bit[col] & !(1 << row);
     }
     
-}
-
-/** Initializes the LED mat on the UCFK
- * sets all pins to HIGH*/
-void ledMatInit(void) {
-    for(uint8_t row = 0; row < 7; row++) {
-        pio_config_set (rows[row], PIO_OUTPUT_HIGH);
-    }
-    
-    for(uint8_t col = 0; col < 5; col++) {
-        pio_config_set (cols[col], PIO_OUTPUT_HIGH);
-    }
 }
 
 /** Clears the current bit map by setting it to all zeroes*/
-void bitClear(uint8_t *currBit) {
-    for(uint8_t col = 0; col < 5; col++) {
-        currBit[col] = 0;
+void bit_clear(uint8_t *curr_bit) {
+    for(uint8_t col = MIN_COL; col <= MAX_COL; col++) {
+        curr_bit[col] = MIN_COL;
     }
+}
+
+/** Updates the bitmap, turns bits on or on within each row
+ *  @param bitmap: The bitmap to update
+ *  @param paddle_1: the first paddle
+ *  @param paddle_2: the second paddle
+ *  @param on: turns bit on if true, else off*/
+void update_bit_map(uint8_t *bit_map, paddle_struct_t paddle_1, paddle_struct_t paddle_2, bool on)
+{
+    bit_maker(bit_map, paddle_1.curr_col_1,paddle_1.curr_row_1, on);
+    bit_maker(bit_map, paddle_1.curr_col_2,paddle_1.curr_row_2, on);
+    bit_maker(bit_map, paddle_2.curr_col_1,paddle_2.curr_row_1, on);
+    bit_maker(bit_map, paddle_2.curr_col_2,paddle_2.curr_row_2, on);
+}
+
+/** Updates the LED matrix display
+ *  @param current_column: The current column to display
+ *  @param bitmap: the mapping of bits to display*/
+uint8_t update_display(uint8_t current_column, uint8_t *bit_map)
+{
+    display_column (bit_map[current_column], current_column);
+
+    current_column++;
+
+    if (current_column > (LEDMAT_COLS_NUM - 1))
+    {
+        current_column = MIN_COL;
+    }
+    return current_column;
 }

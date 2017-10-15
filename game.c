@@ -1,3 +1,9 @@
+/** @file   game.c
+    @author G Lamont and L Brewster
+    @date   15 October 2017
+    @brief  Pong game: Two players compete to return the bouncing ball;
+*/
+
 #include "system.h"
 #include "pongBall.h"
 #include "pongPaddle.h"
@@ -7,147 +13,129 @@
 #include "tinygl.h"
 #include "pacer.h"
 #include "../fonts/font3x5_1.h"
-#include "pongGameStatus.h"
+//#include "pongGameStatus.h"
 #include "ir_uart.h"
 
 #define UP 1
 #define DOWN 0
+#define PLAYER_1 1
+#define PLAYER_2 2
+#define TRUE 1
+#define FALSE 0
+#define ON 1
+#define OFF 0
+#define LOOP_RATE 500
+#define TEXT_SPEED 5
+#define BALL_SPEED 200
 
-bool isPlayer1 = 1;
+bool is_player1 = TRUE;
 
-/** Welcome message to start game */
-void welcomeMsg (void)
+/** Welcome message to start game 
+ *  prints until one player presses the button*/
+void welcome_msg (void)
 {
-    tinygl_init (1000);
+    tinygl_init (LOOP_RATE * 2);
     tinygl_font_set (&font3x5_1);
-    tinygl_text_speed_set (5);
+    tinygl_text_speed_set (TEXT_SPEED);
     tinygl_text_mode_set (TINYGL_TEXT_MODE_SCROLL);
     tinygl_text_dir_set (TINYGL_TEXT_DIR_ROTATE);
     tinygl_text ("WELCOME TO PONG! ");
 }
 
-/** Updates the LED matrix display
- *  @param current_column: The current column to display
- *  @param bitmap: the mapping of bits to display*/
-uint8_t updateDisplay(uint8_t current_column, uint8_t *bitMap)
-{
-    display_column (bitMap[current_column], current_column);
-
-    current_column++;
-
-    if (current_column > (LEDMAT_COLS_NUM - 1))
-    {
-        current_column = 0;
-    }
-    return current_column;
-}
-
-/** Updates the bitmap, turns bits on or on within each row
- *  @param bitmap: The bitmap to update
- *  @param paddle1: the first paddle
- *  @param paddle2: the second paddle
- *  @param on: turns bit on if true, else off*/
-void updateBitMap(uint8_t *bitMap, paddle_struct_t paddle1, paddle_struct_t paddle2, bool on)
-{
-    bitMaker(bitMap, paddle1.currCol1,paddle1.currRow1, on);
-    bitMaker(bitMap, paddle1.currCol2,paddle1.currRow2, on);
-    bitMaker(bitMap, paddle2.currCol1,paddle2.currRow1, on);
-    bitMaker(bitMap, paddle2.currCol2,paddle2.currRow2, on);
-}
-
 /** The game starting message, will display a nice message
  *  and also based on button press, decides who player 1 is */
-void gameStart(void)
+void game_start(void)
 {
-    welcomeMsg();
-    bool gameStart = 0;
+    welcome_msg();
+    bool game_start = FALSE;
 
-    while (!gameStart) {
+    while (!game_start) {
         navswitch_update();
         if (ir_uart_read_ready_p ()) {
             if (ir_uart_getc () == 'p') {
-                isPlayer1 = 0;
-                gameStart = 1;
+                is_player1 = FALSE;
+                game_start = TRUE;
             }
         }
         if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
             ir_uart_putc('p');
-            gameStart = 1;
+            game_start = TRUE;
         }
         tinygl_update ();
     }
 }
 
 /** Polls button and moves the paddle accordingly*/
-paddle_struct_t pollPaddleButton(paddle_struct_t paddle)
+paddle_struct_t poll_paddle_button(paddle_struct_t paddle)
 {
     navswitch_update ();
     if (navswitch_push_event_p (NAVSWITCH_EAST)) {
-        paddle = movePaddle(paddle, DOWN);
+        paddle = move_paddle(paddle, DOWN);
     }
     else if (navswitch_push_event_p (NAVSWITCH_WEST)) {
-        paddle = movePaddle(paddle, UP);
+        paddle = move_paddle(paddle, UP);
     }
     return paddle;
 }
 
 int main (void)
 {
-    pacer_init (500);
+    pacer_init (LOOP_RATE);
     navswitch_init ();
     system_init ();
-    ledMatInit();
+    led_mat_init();
     ir_uart_init ();
 
-    gameStart();
+    game_start();
 
-    paddle_struct_t paddle1 = initPaddle(1);
-    paddle_struct_t paddle2 = initPaddle(2);
-    ball_struct_t ball = initBall();
+    paddle_struct_t paddle_1 = init_paddle(PLAYER_1);
+    paddle_struct_t paddle_2 = init_paddle(PLAYER_2);
+    ball_struct_t ball = init_ball();
 
     char received;
     char send;
 
     int16_t counter = 0;
 
-    uint8_t newBitmap[5] = {0};
+    uint8_t bit_map[5] = {0};
     uint8_t current_column = 0;
 
-    while (1)
+    while (TRUE)
     {
         pacer_wait ();
-        updateBitMap(newBitmap, paddle1, paddle2, 0) ;
+        update_bit_map(bit_map, paddle_1, paddle_2, OFF) ;
 
-        if (isPlayer1) {
+        if (is_player1) {
 
-            if (counter == 200) {
-                bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
-                ball = moveBall(ball);
-                send = (char) (ball.currRow * 10 + ball.currCol + 32);
+            if (counter == BALL_SPEED) {
+                bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
+                ball = move_ball(ball);
+                
+                send = (char) (ball.curr_row * 10 + ball.curr_col + 32);
                 ir_uart_putc(send);
-                send = 100 + paddle1.currCol1;
+                send = 100 + paddle_1.curr_col_1;
                 ir_uart_putc(send);
                 counter = 0;
             }
 
-            paddle1 = pollPaddleButton(paddle1);
+            paddle_1 = poll_paddle_button(paddle_1);
 
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
                 if (received >= 120 && received <= 123) {
-                    paddle2.currCol1 = received - 120;
-                    paddle2.currCol2 = received - 119;
+                    paddle_2.curr_col_1 = received - 120;
+                    paddle_2.curr_col_2 = received - 119;
 
                 }
             }
 
             /*Collisions
-            if (!collision(paddle1, ball) && ball.currRow == 0) {
+            if (!collision(paddle_1, ball) && ball.currRow == 0) {
                 Player 1 has lost
                 send = 'w';
                 ir_uart_putc(send);
                 break;
-            } else if (!collision(paddle2, ball) && ball.currRow == 6) {
+            } else if (!collision(paddle_2, ball) && ball.currRow == 6) {
                 /Player 2 has lost
                 send = 'l';
                 ir_uart_putc(send);
@@ -155,35 +143,33 @@ int main (void)
             }*/
 
         } else {
-            paddle2 = pollPaddleButton(paddle2);
+            paddle_2 = poll_paddle_button(paddle_2);
             if (counter % 100 == 0) {
-                send = 120 + paddle2.currCol1;
+                send = 120 + paddle_2.curr_col_1;
                 ir_uart_putc(send);
             }
-
-
             if (ir_uart_read_ready_p()) {
                 received = ir_uart_getc();
 
                 if (received <= 96 && received >= 32) {
                     received -= 32;
-                    bitMaker(newBitmap, ball.currCol,ball.currRow, 0);
-                    ball.currCol = received % 10;
-                    ball.currRow = (received - ball.currCol ) / 10;
+                    bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
+                    ball.curr_col = received % 10;
+                    ball.curr_row = (received - ball.curr_col ) / 10;
 
                 } else if (received >= 100 && received <= 103) {
-                    paddle1.currCol1 = received - 100;
-                    paddle1.currCol2 = received - 99;
+                    paddle_1.curr_col_1 = received - 100;
+                    paddle_1.curr_col_2 = received - 99;
                 } else {
                     //break;
                 }
             }
         }
 
-        bitMaker(newBitmap, ball.currCol,ball.currRow, 1);
-        updateBitMap(newBitmap, paddle1, paddle2, 1);
+        bit_maker(bit_map, ball.curr_col,ball.curr_row, ON);
+        update_bit_map(bit_map, paddle_1, paddle_2, ON);
         counter++;
-        current_column = updateDisplay(current_column, newBitmap);
+        current_column = update_display(current_column, bit_map);
     }
 }
 

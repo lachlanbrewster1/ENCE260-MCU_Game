@@ -1,5 +1,5 @@
 # File:   Makefile
-# Author: M. P. Hayes, UCECE
+# Author: M. P. Hayes, UCECE -- Edited by G Lamont and L Brewster
 # Date:   12 Sep 2010
 # Descr:  Makefile for game
 
@@ -16,21 +16,24 @@ all: game.out
 
 
 # Compile: create object files from C source files.
-game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h ../../drivers/navswitch.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
+game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h ../../assignment/team317/ledController.h ../../drivers/navswitch.h ../../drivers/avr/pio.h ../../utils/tinygl.h ../../utils/pacer.h ../../utils/font.h
+	$(CC) -c $(CFLAGS) $< -o $@
+	
+ledMat.o: ledMat.c ../../drivers/avr/system.h ../../drivers/avr/pio.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
+pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h
+pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-pongGameStatus.o: pongGameStatus.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h
+pongGameStatus.o: pongGameStatus.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h 
 	$(CC) -c $(CFLAGS) $< -o $@
 
-ledController.o: ledController.c ../../drivers/avr/system.h ../../drivers/avr/pio.h
+ledController.o: ledController.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../assignment/team317/pongPaddle.h ../../assignment/team317/ledMat.h
 	$(CC) -c $(CFLAGS) $< -o $@
-
+	
 pio.o: ../../drivers/avr/pio.c ../../drivers/avr/pio.h ../../drivers/avr/system.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -72,7 +75,7 @@ prescale.o: ../../drivers/avr/prescale.c ../../drivers/avr/prescale.h ../../driv
 	$(CC) -c $(CFLAGS) $< -o $@
 
 # Link: create ELF output file from object files.
-game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o pongGameStatus.o ir_uart.o usart1.o timer.o timer0.o prescale.o
+game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o pongGameStatus.o ir_uart.o usart1.o timer.o timer0.o prescale.o ledMat.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

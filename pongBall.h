@@ -1,35 +1,29 @@
 /** @file   pongBall.h
-    @author G Lamont
+    @author G Lamont and L Brewster
     @date   6 October 2017
-    @brief  pong ball module.
+    @brief  Pong ball module. Initiates and moves a ball object
 */
 
 #include "system.h"
 #include "pacer.h"
 #include "pio.h"
-
-
-/** Turn single LED within matrix on or off.
-    @param col LED column number
-    @param row LED row number
-    @param state LED state  */
-void ledmat_pixel_set1 (int col, int row, bool state);
+#include "ledMat.h"
 
 /** Structure to define a pong ball
  * contains balls current position
  * and current direction */
 typedef struct ball_struct
 {
-    int8_t currRow;
-    int8_t currCol;
+    int8_t curr_row;
+    int8_t curr_col;
     bool left;
     bool down;
 } ball_struct_t;
 
 /** Initializes the ball
  * places the ball at pos (1,1) */
-ball_struct_t initBall(void);
+ball_struct_t init_ball(void);
 
 /** Moves the given ball diagonally across the board
  * @param ball: given balls new position */
-ball_struct_t moveBall (ball_struct_t ball);
+ball_struct_t move_ball (ball_struct_t ball);

@@ -1,10 +1,12 @@
 /** @file   pongGameStatus.h
-    @author G Lamont
+    @author G Lamont and L Brewster
     @date   11 October 2017
-    @brief  pong paddle module.
+    @brief  Pong game status module; detects collisions and runs game logic
 */
 
 #include "system.h"
+#include "pongPaddle.h"
+#include "pongBall.h"
 
 /** Checks to see if a ball is colliding with the paddle or the ball
  *  @param paddle: the paddle being checked
