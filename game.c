@@ -26,7 +26,6 @@
 #define OFF 0
 #define LOOP_RATE 500
 #define TEXT_SPEED 5
-#define BALL_SPEED 200
 
 bool is_player1 = TRUE;
 
@@ -44,10 +43,9 @@ void scrolling_msg (const char* message)
 
 /** The game starting message, will display a nice message
  *  and also based on button press, decides who player 1 is */
-void game_start(void)
+void game_message(const char* message)
 {
-    const char* welcome = "WELCOME TO PONG! ";
-    scrolling_msg(welcome);
+    scrolling_msg(message);
     bool game_start = FALSE;
 
     while (!game_start) {
@@ -79,31 +77,18 @@ paddle_struct_t poll_paddle_button(paddle_struct_t paddle)
     return paddle;
 }
 
-
-/** Checks if the ball has collided with the wall */
-bool wall_collision(paddle_struct_t paddle, ball_struct_t ball)
-{
-    if(paddle.curr_row_1 == ball.curr_row) {
-        if(ball.curr_col != paddle.curr_col_1 && ball.curr_col != paddle.curr_col_2) {
-            return TRUE;
-        }
-        else {
-            return FALSE;
-        }
-    }
-
-    return FALSE;
-}
-
 int main (void)
 {
+    is_player1 = TRUE;
+    
     pacer_init (LOOP_RATE);
     navswitch_init ();
     system_init ();
     led_mat_init();
     ir_uart_init ();
-
-    game_start();
+    
+    const char* welcome = "WELCOME TO PONG! ";
+    game_message(welcome);
 
     paddle_struct_t paddle_1 = init_paddle(PLAYER_1);
     paddle_struct_t paddle_2 = init_paddle(PLAYER_2);
@@ -133,35 +118,29 @@ int main (void)
                 paddle_2 = check_player_2(paddle_2);
             }
 
-            if (counter == BALL_SPEED) {
+            if (counter == ball.speed) {
                 bit_maker(bit_map, ball.curr_col,ball.curr_row, OFF);
-                ball = move_ball(ball);
+                ball = move_ball(ball, paddle_1, paddle_2);
 
                 send_data_to_p2(ball, paddle_1);
                 counter = 0;
-
-                if(ball.curr_row == 0 && wall_collision(paddle_1, ball)) {
-                    ball.player_1_lives --;
-                    if(ball.player_1_lives == 0) {
-                        won = FALSE;
-                        send = 'w';
-                        ir_uart_putc(send);
-                        break;
-                    }
-                } else if (ball.curr_row == 6 && wall_collision(paddle_2, ball)) {
-                    ball.player_2_lives--;
-                    if(ball.player_2_lives == 0) {
-                        send = 'l';
-                        ir_uart_putc(send);
-                        won = TRUE;
-                        break;
-                    }
+                
+                if(ball.player_1_lives == 0) {
+                    won = FALSE;
+                    send = 'w';
+                    ir_uart_putc(send);
+                    break;
+                } else if(ball.player_2_lives == 0) {
+                    send = 'l';
+                    ir_uart_putc(send);
+                    won = TRUE;
+                    break;
                 }
             }
 
         } else {
             paddle_2 = poll_paddle_button(paddle_2);
-            if (counter % BALL_SPEED / 2 == 0) {
+            if (counter % ball.speed / 2 == 0) {
                 send_data_to_p1(paddle_2);
             }
             if (ir_uart_read_ready_p()) {
@@ -184,26 +163,15 @@ int main (void)
         counter++;
         current_column = update_display(current_column, bit_map);
     }
-
+    
+    const char* message;
+    
     if(won) {
-        scrolling_msg("YOU WON!");
+        message = "YOU WON!";
     } else {
-        scrolling_msg("YOU LOST!");
+        message = "YOU LOST!";
     }
-
-    pacer_init (LOOP_RATE * 10);
-
-    bool restart = FALSE;
-
-    while(!restart) {
-        pacer_wait();
-        navswitch_update();
-        if (navswitch_push_event_p(NAVSWITCH_PUSH)) {
-            restart = TRUE;
-        }
-        tinygl_update();
-
-    }
+    
+    game_message(message);
     main();
 }
-

@@ -22,7 +22,7 @@ game.o: game.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ..
 ledMat.o: ledMat.c ../../drivers/avr/system.h ../../drivers/avr/pio.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h
+pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h ../../assignment/team317/pongPaddle.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
 pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h
