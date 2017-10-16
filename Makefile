@@ -28,9 +28,6 @@ pongBall.o: pongBall.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../
 pongPaddle.o: pongPaddle.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../utils/pacer.h ../../assignment/team317/ledMat.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
-pongGameStatus.o: pongGameStatus.c ../../drivers/avr/system.h ../../assignment/team317/pongBall.h ../../assignment/team317/pongPaddle.h
-	$(CC) -c $(CFLAGS) $< -o $@
-
 ledController.o: ledController.c ../../drivers/avr/system.h ../../drivers/avr/pio.h ../../assignment/team317/pongPaddle.h ../../assignment/team317/ledMat.h
 	$(CC) -c $(CFLAGS) $< -o $@
 
@@ -77,7 +74,7 @@ prescale.o: ../../drivers/avr/prescale.c ../../drivers/avr/prescale.h ../../driv
 	$(CC) -c $(CFLAGS) $< -o $@
 
 # Link: create ELF output file from object files.
-game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o pongGameStatus.o ir_uart.o usart1.o timer.o timer0.o prescale.o ledMat.o pongDataSharing.o
+game.out: game.o pongBall.o pongPaddle.o ledController.o pio.o system.o display.o ledmat.o navswitch.o font.o pacer.o tinygl.o ir_uart.o usart1.o timer.o timer0.o prescale.o ledMat.o pongDataSharing.o
 	$(CC) $(CFLAGS) $^ -o $@ -lm
 	$(SIZE) $@
 

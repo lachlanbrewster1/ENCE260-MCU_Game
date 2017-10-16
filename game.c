@@ -84,11 +84,12 @@ int main (void)
     pacer_init (LOOP_RATE);
     navswitch_init ();
     system_init ();
-    led_mat_init();
     ir_uart_init ();
     
     const char* welcome = "WELCOME TO PONG! ";
     game_message(welcome);
+    
+    led_mat_init();
 
     paddle_struct_t paddle_1 = init_paddle(PLAYER_1);
     paddle_struct_t paddle_2 = init_paddle(PLAYER_2);
